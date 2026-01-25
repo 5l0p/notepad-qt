@@ -2,8 +2,10 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QPlainTextEdit>
 #include <QLabel>
+
+class CodeEditor;
+class SyntaxHighlighter;
 
 class MainWindow : public QMainWindow
 {
@@ -21,7 +23,6 @@ private slots:
     void open();
     bool save();
     bool saveAs();
-    void about();
     void documentModified();
     void updateStatusBar();
 
@@ -35,7 +36,8 @@ private:
     void setCurrentFile(const QString &fileName);
     QString strippedName(const QString &fullFileName);
 
-    QPlainTextEdit *textEdit;
+    CodeEditor *textEdit;
+    SyntaxHighlighter *highlighter;
     QString currentFile;
     QLabel *lineColLabel;
 };

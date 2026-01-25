@@ -1,4 +1,6 @@
 #include "mainwindow.h"
+#include "codeeditor.h"
+#include "syntaxhighlighter.h"
 
 #include <QAction>
 #include <QMenuBar>
@@ -9,18 +11,28 @@
 #include <QTextStream>
 #include <QFont>
 #include <QFontDialog>
+#include <QPalette>
 #include <QApplication>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
-    textEdit = new QPlainTextEdit;
+    textEdit = new CodeEditor;
     setCentralWidget(textEdit);
 
     // Set a monospace font like classic Notepad
     QFont font("Monospace", 10);
     font.setStyleHint(QFont::Monospace);
     textEdit->setFont(font);
+
+    // Keep text area as black on white (override dark theme)
+    QPalette textPalette = textEdit->palette();
+    textPalette.setColor(QPalette::Base, Qt::white);
+    textPalette.setColor(QPalette::Text, Qt::black);
+    textEdit->setPalette(textPalette);
+
+    // Syntax highlighting (monochrome)
+    highlighter = new SyntaxHighlighter(textEdit->document());
 
     createActions();
     createMenus();
@@ -57,7 +69,7 @@ void MainWindow::open()
     if (maybeSave()) {
         QString fileName = QFileDialog::getOpenFileName(this,
             tr("Open File"), QString(),
-            tr("Text Files (*.txt);;All Files (*)"));
+            tr("All Files (*);;Text Files (*.txt)"));
         if (!fileName.isEmpty()) {
             loadFile(fileName);
         }
@@ -84,17 +96,11 @@ bool MainWindow::saveAs()
 {
     QString fileName = QFileDialog::getSaveFileName(this,
         tr("Save As"), QString(),
-        tr("Text Files (*.txt);;All Files (*)"));
+        tr("All Files (*);;Text Files (*.txt)"));
     if (fileName.isEmpty()) {
         return false;
     }
     return saveFile(fileName);
-}
-
-void MainWindow::about()
-{
-    QMessageBox::about(this, tr("About Notepad"),
-        tr("<b>Notepad</b><br>A simple text editor built with Qt."));
 }
 
 void MainWindow::documentModified()
@@ -167,27 +173,39 @@ void MainWindow::createMenus()
     QAction *selectAllAct = editMenu->addAction(tr("Select &All"), textEdit, &QPlainTextEdit::selectAll);
     selectAllAct->setShortcuts(QKeySequence::SelectAll);
 
-    // Format menu
-    QMenu *formatMenu = menuBar()->addMenu(tr("F&ormat"));
+    // View menu
+    QMenu *viewMenu = menuBar()->addMenu(tr("&View"));
 
-    QAction *wordWrapAct = formatMenu->addAction(tr("&Word Wrap"));
+    QAction *lineNumAct = viewMenu->addAction(tr("&Line Numbers"));
+    lineNumAct->setCheckable(true);
+    lineNumAct->setChecked(true);
+    connect(lineNumAct, &QAction::toggled, [this](bool checked) {
+        textEdit->setLineNumbersVisible(checked);
+    });
+
+    QAction *wordWrapAct = viewMenu->addAction(tr("&Word Wrap"));
     wordWrapAct->setCheckable(true);
     wordWrapAct->setChecked(true);
     connect(wordWrapAct, &QAction::toggled, [this](bool checked) {
         textEdit->setLineWrapMode(checked ? QPlainTextEdit::WidgetWidth : QPlainTextEdit::NoWrap);
     });
 
-    formatMenu->addAction(tr("&Font..."), [this]() {
+    QAction *syntaxAct = viewMenu->addAction(tr("&Syntax Highlighting"));
+    syntaxAct->setCheckable(true);
+    syntaxAct->setChecked(true);
+    connect(syntaxAct, &QAction::toggled, [this](bool checked) {
+        highlighter->setEnabled(checked);
+    });
+
+    viewMenu->addSeparator();
+
+    viewMenu->addAction(tr("&Font..."), [this]() {
         bool ok;
         QFont font = QFontDialog::getFont(&ok, textEdit->font(), this);
         if (ok) {
             textEdit->setFont(font);
         }
     });
-
-    // Help menu
-    QMenu *helpMenu = menuBar()->addMenu(tr("&Help"));
-    helpMenu->addAction(tr("&About"), this, &MainWindow::about);
 }
 
 void MainWindow::createStatusBar()
