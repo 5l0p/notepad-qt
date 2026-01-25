@@ -36,6 +36,8 @@ private:
     void createActions();
     void createMenus();
     void createStatusBar();
+    void loadSettings();
+    void saveSettings();
     bool maybeSave();
     bool saveFile(const QString &fileName);
     void loadFile(const QString &fileName);
@@ -47,6 +49,13 @@ private:
     FindDialog *findDialog;
     QString currentFile;
     QLabel *lineColLabel;
+
+    // View menu actions (for settings persistence)
+    QAction *lineNumAct;
+    QAction *wordWrapAct;
+    QAction *syntaxAct;
+    QAction *rainbowAct;
+    QAction *statusBarAct;
 };
 
 #endif // MAINWINDOW_H

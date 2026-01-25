@@ -18,6 +18,9 @@
 #include <QFontDialog>
 #include <QPalette>
 #include <QApplication>
+#include <QSettings>
+#include <QDir>
+#include <QProcess>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -52,13 +55,16 @@ MainWindow::MainWindow(QWidget *parent)
             this, &MainWindow::updateStatusBar);
 
     setCurrentFile(QString());
+    textEdit->setAcceptDrops(false);
     setAcceptDrops(true);
     resize(800, 600);
+    loadSettings();
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     if (maybeSave()) {
+        saveSettings();
         event->accept();
     } else {
         event->ignore();
@@ -188,6 +194,11 @@ void MainWindow::createMenus()
     QAction *newAct = fileMenu->addAction(tr("&New"), this, &MainWindow::newFile);
     newAct->setShortcuts(QKeySequence::New);
 
+    QAction *newWindowAct = fileMenu->addAction(tr("New &Window"), []() {
+        QProcess::startDetached(QCoreApplication::applicationFilePath(), QStringList());
+    });
+    newWindowAct->setShortcut(QKeySequence(tr("Ctrl+Shift+N")));
+
     QAction *openAct = fileMenu->addAction(tr("&Open..."), this, &MainWindow::open);
     openAct->setShortcuts(QKeySequence::Open);
 
@@ -246,32 +257,39 @@ void MainWindow::createMenus()
     // View menu
     QMenu *viewMenu = menuBar()->addMenu(tr("&View"));
 
-    QAction *lineNumAct = viewMenu->addAction(tr("&Line Numbers"));
+    lineNumAct = viewMenu->addAction(tr("&Line Numbers"));
     lineNumAct->setCheckable(true);
     lineNumAct->setChecked(true);
     connect(lineNumAct, &QAction::toggled, [this](bool checked) {
         textEdit->setLineNumbersVisible(checked);
     });
 
-    QAction *wordWrapAct = viewMenu->addAction(tr("&Word Wrap"));
+    wordWrapAct = viewMenu->addAction(tr("&Word Wrap"));
     wordWrapAct->setCheckable(true);
     wordWrapAct->setChecked(true);
     connect(wordWrapAct, &QAction::toggled, [this](bool checked) {
         textEdit->setLineWrapMode(checked ? QPlainTextEdit::WidgetWidth : QPlainTextEdit::NoWrap);
     });
 
-    QAction *syntaxAct = viewMenu->addAction(tr("&Syntax Highlighting"));
+    syntaxAct = viewMenu->addAction(tr("&Syntax Highlighting"));
     syntaxAct->setCheckable(true);
     syntaxAct->setChecked(true);
     connect(syntaxAct, &QAction::toggled, [this](bool checked) {
         highlighter->setEnabled(checked);
     });
 
-    QAction *rainbowAct = viewMenu->addAction(tr("&Rainbow Brackets"));
+    rainbowAct = viewMenu->addAction(tr("&Rainbow Brackets"));
     rainbowAct->setCheckable(true);
     rainbowAct->setChecked(false);
     connect(rainbowAct, &QAction::toggled, [this](bool checked) {
         highlighter->setRainbowBracketsEnabled(checked);
+    });
+
+    statusBarAct = viewMenu->addAction(tr("S&tatus Bar"));
+    statusBarAct->setCheckable(true);
+    statusBarAct->setChecked(true);
+    connect(statusBarAct, &QAction::toggled, [this](bool checked) {
+        statusBar()->setVisible(checked);
     });
 
     viewMenu->addSeparator();
@@ -370,4 +388,31 @@ void MainWindow::setCurrentFile(const QString &fileName)
 QString MainWindow::strippedName(const QString &fullFileName)
 {
     return QFileInfo(fullFileName).fileName();
+}
+
+void MainWindow::loadSettings()
+{
+    QString configPath = QDir::homePath() + "/.config/5l0p/qtcode.conf";
+    QSettings settings(configPath, QSettings::IniFormat);
+    settings.beginGroup("View");
+    lineNumAct->setChecked(settings.value("lineNumbers", true).toBool());
+    wordWrapAct->setChecked(settings.value("wordWrap", true).toBool());
+    syntaxAct->setChecked(settings.value("syntaxHighlighting", true).toBool());
+    rainbowAct->setChecked(settings.value("rainbowBrackets", false).toBool());
+    statusBarAct->setChecked(settings.value("statusBar", true).toBool());
+    settings.endGroup();
+}
+
+void MainWindow::saveSettings()
+{
+    QString configPath = QDir::homePath() + "/.config/5l0p/qtcode.conf";
+    QDir().mkpath(QDir::homePath() + "/.config/5l0p");
+    QSettings settings(configPath, QSettings::IniFormat);
+    settings.beginGroup("View");
+    settings.setValue("lineNumbers", lineNumAct->isChecked());
+    settings.setValue("wordWrap", wordWrapAct->isChecked());
+    settings.setValue("syntaxHighlighting", syntaxAct->isChecked());
+    settings.setValue("rainbowBrackets", rainbowAct->isChecked());
+    settings.setValue("statusBar", statusBarAct->isChecked());
+    settings.endGroup();
 }
