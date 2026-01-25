@@ -1,6 +1,6 @@
-# Notepad Qt
+# QtCode
 
-A simple, lightweight text editor built with Qt, inspired by Windows Notepad.
+A simple, lightweight code editor built with Qt.
 
 ## Features
 
@@ -25,7 +25,7 @@ make
 ## Usage
 
 ```bash
-./notepad [file]
+./qtcode [file]
 ```
 
 ## Keyboard Shortcuts

@@ -1,6 +1,6 @@
 QT       += core gui widgets
 
-TARGET = notepad
+TARGET = qtcode
 TEMPLATE = app
 
 CONFIG += c++17

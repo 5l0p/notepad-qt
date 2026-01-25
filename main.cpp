@@ -6,7 +6,7 @@
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-    app.setApplicationName("Notepad");
+    app.setApplicationName("QtCode");
 
     // Use Fusion style for consistent dark theme
     app.setStyle(QStyleFactory::create("Fusion"));

@@ -266,7 +266,7 @@ bool MainWindow::maybeSave()
         return true;
     }
 
-    QMessageBox::StandardButton ret = QMessageBox::warning(this, tr("Notepad"),
+    QMessageBox::StandardButton ret = QMessageBox::warning(this, tr("QtCode"),
         tr("The document has been modified.\n"
            "Do you want to save your changes?"),
         QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
@@ -283,7 +283,7 @@ bool MainWindow::saveFile(const QString &fileName)
 {
     QFile file(fileName);
     if (!file.open(QFile::WriteOnly | QFile::Text)) {
-        QMessageBox::warning(this, tr("Notepad"),
+        QMessageBox::warning(this, tr("QtCode"),
             tr("Cannot write file %1:\n%2.")
             .arg(fileName)
             .arg(file.errorString()));
@@ -304,7 +304,7 @@ void MainWindow::loadFile(const QString &fileName)
 {
     QFile file(fileName);
     if (!file.open(QFile::ReadOnly | QFile::Text)) {
-        QMessageBox::warning(this, tr("Notepad"),
+        QMessageBox::warning(this, tr("QtCode"),
             tr("Cannot read file %1:\n%2.")
             .arg(fileName)
             .arg(file.errorString()));
@@ -332,7 +332,7 @@ void MainWindow::setCurrentFile(const QString &fileName)
     } else {
         shownName = strippedName(currentFile);
     }
-    setWindowTitle(tr("%1[*] - Notepad").arg(shownName));
+    setWindowTitle(tr("%1[*] - QtCode").arg(shownName));
 }
 
 QString MainWindow::strippedName(const QString &fullFileName)
