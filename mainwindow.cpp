@@ -10,6 +10,9 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QCloseEvent>
+#include <QDragEnterEvent>
+#include <QDropEvent>
+#include <QMimeData>
 #include <QTextStream>
 #include <QFont>
 #include <QFontDialog>
@@ -49,6 +52,7 @@ MainWindow::MainWindow(QWidget *parent)
             this, &MainWindow::updateStatusBar);
 
     setCurrentFile(QString());
+    setAcceptDrops(true);
     resize(800, 600);
 }
 
@@ -58,6 +62,27 @@ void MainWindow::closeEvent(QCloseEvent *event)
         event->accept();
     } else {
         event->ignore();
+    }
+}
+
+void MainWindow::dragEnterEvent(QDragEnterEvent *event)
+{
+    if (event->mimeData()->hasUrls()) {
+        event->acceptProposedAction();
+    }
+}
+
+void MainWindow::dropEvent(QDropEvent *event)
+{
+    const QMimeData *mimeData = event->mimeData();
+    if (mimeData->hasUrls()) {
+        QList<QUrl> urls = mimeData->urls();
+        if (!urls.isEmpty()) {
+            QString filePath = urls.first().toLocalFile();
+            if (!filePath.isEmpty()) {
+                openFile(filePath);
+            }
+        }
     }
 }
 
@@ -240,6 +265,13 @@ void MainWindow::createMenus()
     syntaxAct->setChecked(true);
     connect(syntaxAct, &QAction::toggled, [this](bool checked) {
         highlighter->setEnabled(checked);
+    });
+
+    QAction *rainbowAct = viewMenu->addAction(tr("&Rainbow Brackets"));
+    rainbowAct->setCheckable(true);
+    rainbowAct->setChecked(false);
+    connect(rainbowAct, &QAction::toggled, [this](bool checked) {
+        highlighter->setRainbowBracketsEnabled(checked);
     });
 
     viewMenu->addSeparator();

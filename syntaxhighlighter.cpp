@@ -1,8 +1,24 @@
 #include "syntaxhighlighter.h"
 
 SyntaxHighlighter::SyntaxHighlighter(QTextDocument *parent)
-    : QSyntaxHighlighter(parent), enabled(true)
+    : QSyntaxHighlighter(parent), enabled(true), rainbowBrackets(false)
 {
+    // Rainbow bracket colors
+    const QColor bracketColors[] = {
+        QColor(220, 50, 47),   // Red
+        QColor(38, 139, 210),  // Blue
+        QColor(133, 153, 0),   // Green
+        QColor(181, 137, 0),   // Yellow
+        QColor(211, 54, 130),  // Magenta
+        QColor(42, 161, 152),  // Cyan
+    };
+    for (const QColor &color : bracketColors) {
+        QTextCharFormat fmt;
+        fmt.setForeground(color);
+        fmt.setFontWeight(QFont::Bold);
+        bracketFormats.append(fmt);
+    }
+
     HighlightingRule rule;
 
     // Keywords - bold
@@ -103,11 +119,58 @@ bool SyntaxHighlighter::isEnabled() const
     return enabled;
 }
 
+void SyntaxHighlighter::setRainbowBracketsEnabled(bool enable)
+{
+    rainbowBrackets = enable;
+    rehighlight();
+}
+
+bool SyntaxHighlighter::rainbowBracketsEnabled() const
+{
+    return rainbowBrackets;
+}
+
+void SyntaxHighlighter::highlightBrackets(const QString &text, int initialDepth)
+{
+    int depth = initialDepth;
+    const QString openBrackets = "([{";
+    const QString closeBrackets = ")]}";
+
+    for (int i = 0; i < text.length(); ++i) {
+        QChar c = text.at(i);
+        int openIdx = openBrackets.indexOf(c);
+        int closeIdx = closeBrackets.indexOf(c);
+
+        if (openIdx != -1) {
+            int colorIndex = depth % bracketFormats.size();
+            setFormat(i, 1, bracketFormats[colorIndex]);
+            depth++;
+        } else if (closeIdx != -1) {
+            depth = qMax(0, depth - 1);
+            int colorIndex = depth % bracketFormats.size();
+            setFormat(i, 1, bracketFormats[colorIndex]);
+        }
+    }
+
+    // Store depth in upper bits of block state (bit 0 is for multi-line comments)
+    int state = currentBlockState();
+    if (state == -1) state = 0;
+    state = (state & 1) | (depth << 1);
+    setCurrentBlockState(state);
+}
+
 void SyntaxHighlighter::highlightBlock(const QString &text)
 {
     if (!enabled) {
+        setCurrentBlockState(0);
         return;
     }
+
+    // Get previous state: bit 0 = in comment, bits 1+ = bracket depth
+    int prevState = previousBlockState();
+    if (prevState == -1) prevState = 0;
+    bool wasInComment = prevState & 1;
+    int bracketDepth = prevState >> 1;
 
     // Apply single-line rules
     for (const HighlightingRule &rule : qAsConst(highlightingRules)) {
@@ -119,10 +182,9 @@ void SyntaxHighlighter::highlightBlock(const QString &text)
     }
 
     // Handle multi-line comments
-    setCurrentBlockState(0);
-
+    bool inComment = false;
     int startIndex = 0;
-    if (previousBlockState() != 1) {
+    if (!wasInComment) {
         startIndex = text.indexOf(commentStartExpression);
     }
 
@@ -132,7 +194,7 @@ void SyntaxHighlighter::highlightBlock(const QString &text)
         int commentLength = 0;
 
         if (endIndex == -1) {
-            setCurrentBlockState(1);
+            inComment = true;
             commentLength = text.length() - startIndex;
         } else {
             commentLength = endIndex - startIndex + match.capturedLength();
@@ -140,5 +202,18 @@ void SyntaxHighlighter::highlightBlock(const QString &text)
 
         setFormat(startIndex, commentLength, multiLineCommentFormat);
         startIndex = text.indexOf(commentStartExpression, startIndex + commentLength);
+    }
+
+    // Rainbow brackets
+    if (rainbowBrackets) {
+        highlightBrackets(text, bracketDepth);
+        // highlightBrackets already sets the state with bracket depth
+        // Just update the comment bit
+        int state = currentBlockState();
+        if (state == -1) state = 0;
+        state = (state & ~1) | (inComment ? 1 : 0);
+        setCurrentBlockState(state);
+    } else {
+        setCurrentBlockState(inComment ? 1 : 0);
     }
 }

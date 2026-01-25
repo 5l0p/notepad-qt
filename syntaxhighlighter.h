@@ -12,11 +12,15 @@ public:
     SyntaxHighlighter(QTextDocument *parent = nullptr);
     void setEnabled(bool enabled);
     bool isEnabled() const;
+    void setRainbowBracketsEnabled(bool enabled);
+    bool rainbowBracketsEnabled() const;
 
 protected:
     void highlightBlock(const QString &text) override;
 
 private:
+    void highlightBrackets(const QString &text, int initialDepth);
+
     struct HighlightingRule {
         QRegularExpression pattern;
         QTextCharFormat format;
@@ -32,8 +36,10 @@ private:
     QTextCharFormat quotationFormat;
     QTextCharFormat numberFormat;
     QTextCharFormat preprocessorFormat;
+    QVector<QTextCharFormat> bracketFormats;
 
     bool enabled;
+    bool rainbowBrackets;
 };
 
 #endif // SYNTAXHIGHLIGHTER_H

@@ -18,8 +18,8 @@
 - [ ] Configurable color schemes
 - [ ] Detect file encoding (UTF-8, UTF-16, etc.)
 - [ ] File change monitoring (reload prompt)
-- [ ] Bracket matching
-- [ ] Drag and drop file opening
+- [x] Bracket matching (rainbow brackets)
+- [x] Drag and drop file opening
 - [ ] Command-line options (--line, --new-window)
 
 ## Completed
