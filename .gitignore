@@ -1,0 +1,15 @@
+# Build artifacts
+*.o
+moc_*.cpp
+moc_predefs.h
+notepad
+Makefile
+.qmake.stash
+
+# Qt Creator
+*.pro.user
+*.pro.user.*
+
+# IDE
+.idea/
+.vscode/
