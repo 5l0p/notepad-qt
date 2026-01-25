@@ -1,8 +1,10 @@
 #include "mainwindow.h"
 #include "codeeditor.h"
 #include "syntaxhighlighter.h"
+#include "finddialog.h"
 
 #include <QAction>
+#include <QInputDialog>
 #include <QMenuBar>
 #include <QStatusBar>
 #include <QFileDialog>
@@ -33,6 +35,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Syntax highlighting (monochrome)
     highlighter = new SyntaxHighlighter(textEdit->document());
+
+    // Find dialog
+    findDialog = new FindDialog(textEdit, this);
 
     createActions();
     createMenus();
@@ -101,6 +106,35 @@ bool MainWindow::saveAs()
         return false;
     }
     return saveFile(fileName);
+}
+
+void MainWindow::find()
+{
+    findDialog->showFind();
+}
+
+void MainWindow::replace()
+{
+    findDialog->showReplace();
+}
+
+void MainWindow::goToLine()
+{
+    int maxLine = textEdit->document()->blockCount();
+    QTextCursor cursor = textEdit->textCursor();
+    int currentLine = cursor.blockNumber() + 1;
+
+    bool ok;
+    int line = QInputDialog::getInt(this, tr("Go to Line"),
+        tr("Line number (1-%1):").arg(maxLine),
+        currentLine, 1, maxLine, 1, &ok);
+
+    if (ok) {
+        QTextBlock block = textEdit->document()->findBlockByLineNumber(line - 1);
+        cursor.setPosition(block.position());
+        textEdit->setTextCursor(cursor);
+        textEdit->centerCursor();
+    }
 }
 
 void MainWindow::documentModified()
@@ -172,6 +206,17 @@ void MainWindow::createMenus()
 
     QAction *selectAllAct = editMenu->addAction(tr("Select &All"), textEdit, &QPlainTextEdit::selectAll);
     selectAllAct->setShortcuts(QKeySequence::SelectAll);
+
+    editMenu->addSeparator();
+
+    QAction *findAct = editMenu->addAction(tr("&Find..."), this, &MainWindow::find);
+    findAct->setShortcuts(QKeySequence::Find);
+
+    QAction *replaceAct = editMenu->addAction(tr("&Replace..."), this, &MainWindow::replace);
+    replaceAct->setShortcut(QKeySequence(tr("Ctrl+H")));
+
+    QAction *goToLineAct = editMenu->addAction(tr("&Go to Line..."), this, &MainWindow::goToLine);
+    goToLineAct->setShortcut(QKeySequence(tr("Ctrl+G")));
 
     // View menu
     QMenu *viewMenu = menuBar()->addMenu(tr("&View"));

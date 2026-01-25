@@ -9,9 +9,11 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     codeeditor.cpp \
-    syntaxhighlighter.cpp
+    syntaxhighlighter.cpp \
+    finddialog.cpp
 
 HEADERS += \
     mainwindow.h \
     codeeditor.h \
-    syntaxhighlighter.h
+    syntaxhighlighter.h \
+    finddialog.h

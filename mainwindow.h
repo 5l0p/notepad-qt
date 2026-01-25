@@ -6,6 +6,7 @@
 
 class CodeEditor;
 class SyntaxHighlighter;
+class FindDialog;
 
 class MainWindow : public QMainWindow
 {
@@ -23,6 +24,9 @@ private slots:
     void open();
     bool save();
     bool saveAs();
+    void find();
+    void replace();
+    void goToLine();
     void documentModified();
     void updateStatusBar();
 
@@ -38,6 +42,7 @@ private:
 
     CodeEditor *textEdit;
     SyntaxHighlighter *highlighter;
+    FindDialog *findDialog;
     QString currentFile;
     QLabel *lineColLabel;
 };
