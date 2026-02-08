@@ -6,6 +6,10 @@ qtcode
 Makefile
 .qmake.stash
 
+# Static Qt build
+qt5-static-src/
+qt5-static/
+
 # Qt Creator
 *.pro.user
 *.pro.user.*
