@@ -1,7 +1,7 @@
 #include "syntaxhighlighter.h"
 
 SyntaxHighlighter::SyntaxHighlighter(QTextDocument *parent)
-    : QSyntaxHighlighter(parent), enabled(true), rainbowBrackets(false)
+    : QSyntaxHighlighter(parent), enabled(true), rainbowBrackets(false), darkMode(false)
 {
     // Rainbow bracket colors
     const QColor bracketColors[] = {
@@ -19,10 +19,23 @@ SyntaxHighlighter::SyntaxHighlighter(QTextDocument *parent)
         bracketFormats.append(fmt);
     }
 
+    commentStartExpression = QRegularExpression(QStringLiteral("/\\*"));
+    commentEndExpression = QRegularExpression(QStringLiteral("\\*/"));
+
+    updateFormats();
+}
+
+void SyntaxHighlighter::updateFormats()
+{
+    highlightingRules.clear();
+
     HighlightingRule rule;
 
     // Keywords - bold
+    keywordFormat = QTextCharFormat();
     keywordFormat.setFontWeight(QFont::Bold);
+    if (darkMode)
+        keywordFormat.setForeground(Qt::white);
     const QString keywordPatterns[] = {
         // C/C++/Java/JS common keywords
         QStringLiteral("\\bbreak\\b"), QStringLiteral("\\bcase\\b"),
@@ -68,21 +81,24 @@ SyntaxHighlighter::SyntaxHighlighter(QTextDocument *parent)
         highlightingRules.append(rule);
     }
 
-    // Numbers - dark gray
-    numberFormat.setForeground(QColor(80, 80, 80));
+    // Numbers
+    numberFormat = QTextCharFormat();
+    numberFormat.setForeground(darkMode ? QColor(180, 180, 180) : QColor(80, 80, 80));
     rule.pattern = QRegularExpression(QStringLiteral("\\b[0-9]+\\.?[0-9]*\\b"));
     rule.format = numberFormat;
     highlightingRules.append(rule);
 
-    // Preprocessor - bold dark gray
-    preprocessorFormat.setForeground(QColor(60, 60, 60));
+    // Preprocessor
+    preprocessorFormat = QTextCharFormat();
+    preprocessorFormat.setForeground(darkMode ? QColor(180, 180, 180) : QColor(60, 60, 60));
     preprocessorFormat.setFontWeight(QFont::Bold);
     rule.pattern = QRegularExpression(QStringLiteral("^\\s*#[^\n]*"));
     rule.format = preprocessorFormat;
     highlightingRules.append(rule);
 
-    // Single-line strings - italic gray
-    quotationFormat.setForeground(QColor(100, 100, 100));
+    // Single-line strings - italic
+    quotationFormat = QTextCharFormat();
+    quotationFormat.setForeground(darkMode ? QColor(170, 170, 170) : QColor(100, 100, 100));
     quotationFormat.setFontItalic(true);
     rule.pattern = QRegularExpression(QStringLiteral("\"[^\"]*\""));
     rule.format = quotationFormat;
@@ -90,8 +106,9 @@ SyntaxHighlighter::SyntaxHighlighter(QTextDocument *parent)
     rule.pattern = QRegularExpression(QStringLiteral("'[^']*'"));
     highlightingRules.append(rule);
 
-    // Single-line comments - italic light gray
-    singleLineCommentFormat.setForeground(QColor(140, 140, 140));
+    // Single-line comments - italic
+    singleLineCommentFormat = QTextCharFormat();
+    singleLineCommentFormat.setForeground(darkMode ? QColor(120, 120, 120) : QColor(140, 140, 140));
     singleLineCommentFormat.setFontItalic(true);
     rule.pattern = QRegularExpression(QStringLiteral("//[^\n]*"));
     rule.format = singleLineCommentFormat;
@@ -102,10 +119,9 @@ SyntaxHighlighter::SyntaxHighlighter(QTextDocument *parent)
     highlightingRules.append(rule);
 
     // Multi-line comments
-    multiLineCommentFormat.setForeground(QColor(140, 140, 140));
+    multiLineCommentFormat = QTextCharFormat();
+    multiLineCommentFormat.setForeground(darkMode ? QColor(120, 120, 120) : QColor(140, 140, 140));
     multiLineCommentFormat.setFontItalic(true);
-    commentStartExpression = QRegularExpression(QStringLiteral("/\\*"));
-    commentEndExpression = QRegularExpression(QStringLiteral("\\*/"));
 }
 
 void SyntaxHighlighter::setEnabled(bool enable)
@@ -128,6 +144,18 @@ void SyntaxHighlighter::setRainbowBracketsEnabled(bool enable)
 bool SyntaxHighlighter::rainbowBracketsEnabled() const
 {
     return rainbowBrackets;
+}
+
+void SyntaxHighlighter::setDarkMode(bool dark)
+{
+    darkMode = dark;
+    updateFormats();
+    rehighlight();
+}
+
+bool SyntaxHighlighter::isDarkMode() const
+{
+    return darkMode;
 }
 
 void SyntaxHighlighter::highlightBrackets(const QString &text, int initialDepth)

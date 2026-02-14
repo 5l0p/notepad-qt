@@ -18,6 +18,7 @@
 #include <QFontDialog>
 #include <QPalette>
 #include <QApplication>
+#include <QStyle>
 #include <QSettings>
 #include <QDir>
 #include <QProcess>
@@ -32,12 +33,6 @@ MainWindow::MainWindow(QWidget *parent)
     QFont font("Monospace", 10);
     font.setStyleHint(QFont::Monospace);
     textEdit->setFont(font);
-
-    // Keep text area as black on white (override dark theme)
-    QPalette textPalette = textEdit->palette();
-    textPalette.setColor(QPalette::Base, Qt::white);
-    textPalette.setColor(QPalette::Text, Qt::black);
-    textEdit->setPalette(textPalette);
 
     // Syntax highlighting (monochrome)
     highlighter = new SyntaxHighlighter(textEdit->document());
@@ -59,6 +54,7 @@ MainWindow::MainWindow(QWidget *parent)
     setAcceptDrops(true);
     resize(800, 600);
     loadSettings();
+    applyTheme(darkModeAct->isChecked());
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -181,6 +177,42 @@ void MainWindow::updateStatusBar()
     lineColLabel->setText(tr("Ln %1, Col %2").arg(line).arg(col));
 }
 
+void MainWindow::applyTheme(bool dark)
+{
+    if (dark) {
+        QPalette darkPalette;
+        darkPalette.setColor(QPalette::Window, QColor(53, 53, 53));
+        darkPalette.setColor(QPalette::WindowText, Qt::white);
+        darkPalette.setColor(QPalette::Base, QColor(42, 42, 42));
+        darkPalette.setColor(QPalette::AlternateBase, QColor(66, 66, 66));
+        darkPalette.setColor(QPalette::ToolTipBase, Qt::white);
+        darkPalette.setColor(QPalette::ToolTipText, Qt::white);
+        darkPalette.setColor(QPalette::Text, Qt::white);
+        darkPalette.setColor(QPalette::Button, QColor(53, 53, 53));
+        darkPalette.setColor(QPalette::ButtonText, Qt::white);
+        darkPalette.setColor(QPalette::BrightText, Qt::red);
+        darkPalette.setColor(QPalette::Link, QColor(42, 130, 218));
+        darkPalette.setColor(QPalette::Highlight, Qt::white);
+        darkPalette.setColor(QPalette::HighlightedText, Qt::black);
+        QApplication::setPalette(darkPalette);
+
+        QPalette editorPalette = textEdit->palette();
+        editorPalette.setColor(QPalette::Base, QColor(30, 30, 30));
+        editorPalette.setColor(QPalette::Text, QColor(220, 220, 220));
+        textEdit->setPalette(editorPalette);
+    } else {
+        QApplication::setPalette(QApplication::style()->standardPalette());
+
+        QPalette editorPalette = textEdit->palette();
+        editorPalette.setColor(QPalette::Base, Qt::white);
+        editorPalette.setColor(QPalette::Text, Qt::black);
+        textEdit->setPalette(editorPalette);
+    }
+
+    textEdit->setDarkMode(dark);
+    highlighter->setDarkMode(dark);
+}
+
 void MainWindow::createActions()
 {
     // Actions are created inline in createMenus for simplicity
@@ -256,6 +288,13 @@ void MainWindow::createMenus()
 
     // View menu
     QMenu *viewMenu = menuBar()->addMenu(tr("&View"));
+
+    darkModeAct = viewMenu->addAction(tr("&Dark Mode"));
+    darkModeAct->setCheckable(true);
+    darkModeAct->setChecked(true);
+    connect(darkModeAct, &QAction::toggled, this, &MainWindow::applyTheme);
+
+    viewMenu->addSeparator();
 
     lineNumAct = viewMenu->addAction(tr("&Line Numbers"));
     lineNumAct->setCheckable(true);
@@ -382,7 +421,7 @@ void MainWindow::setCurrentFile(const QString &fileName)
     } else {
         shownName = strippedName(currentFile);
     }
-    setWindowTitle(tr("%1[*] - QtCode").arg(shownName));
+    setWindowTitle(tr("%1[*]").arg(shownName));
 }
 
 QString MainWindow::strippedName(const QString &fullFileName)
@@ -395,6 +434,7 @@ void MainWindow::loadSettings()
     QString configPath = QDir::homePath() + "/.config/5l0p/qtcode.conf";
     QSettings settings(configPath, QSettings::IniFormat);
     settings.beginGroup("View");
+    darkModeAct->setChecked(settings.value("darkMode", true).toBool());
     lineNumAct->setChecked(settings.value("lineNumbers", true).toBool());
     wordWrapAct->setChecked(settings.value("wordWrap", true).toBool());
     syntaxAct->setChecked(settings.value("syntaxHighlighting", true).toBool());
@@ -409,6 +449,7 @@ void MainWindow::saveSettings()
     QDir().mkpath(QDir::homePath() + "/.config/5l0p");
     QSettings settings(configPath, QSettings::IniFormat);
     settings.beginGroup("View");
+    settings.setValue("darkMode", darkModeAct->isChecked());
     settings.setValue("lineNumbers", lineNumAct->isChecked());
     settings.setValue("wordWrap", wordWrapAct->isChecked());
     settings.setValue("syntaxHighlighting", syntaxAct->isChecked());

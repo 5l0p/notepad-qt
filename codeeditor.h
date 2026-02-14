@@ -16,6 +16,8 @@ public:
     int lineNumberAreaWidth();
     void setLineNumbersVisible(bool visible);
     bool lineNumbersVisible() const;
+    void setDarkMode(bool dark);
+    bool isDarkMode() const;
 
 protected:
     void resizeEvent(QResizeEvent *event) override;
@@ -27,6 +29,7 @@ private slots:
 private:
     LineNumberArea *lineNumberArea;
     bool showLineNumbers;
+    bool darkMode;
 };
 
 class LineNumberArea : public QWidget

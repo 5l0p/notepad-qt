@@ -4,7 +4,7 @@
 #include <QTextBlock>
 
 CodeEditor::CodeEditor(QWidget *parent)
-    : QPlainTextEdit(parent), showLineNumbers(true)
+    : QPlainTextEdit(parent), showLineNumbers(true), darkMode(false)
 {
     lineNumberArea = new LineNumberArea(this);
 
@@ -67,7 +67,7 @@ void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
     }
 
     QPainter painter(lineNumberArea);
-    painter.fillRect(event->rect(), QColor(240, 240, 240));
+    painter.fillRect(event->rect(), darkMode ? QColor(42, 42, 42) : QColor(240, 240, 240));
 
     QTextBlock block = firstVisibleBlock();
     int blockNumber = block.blockNumber();
@@ -77,7 +77,7 @@ void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
     while (block.isValid() && top <= event->rect().bottom()) {
         if (block.isVisible() && bottom >= event->rect().top()) {
             QString number = QString::number(blockNumber + 1);
-            painter.setPen(QColor(120, 120, 120));
+            painter.setPen(darkMode ? QColor(160, 160, 160) : QColor(120, 120, 120));
             painter.drawText(0, top, lineNumberArea->width() - 5,
                            fontMetrics().height(),
                            Qt::AlignRight, number);
@@ -101,4 +101,15 @@ void CodeEditor::setLineNumbersVisible(bool visible)
 bool CodeEditor::lineNumbersVisible() const
 {
     return showLineNumbers;
+}
+
+void CodeEditor::setDarkMode(bool dark)
+{
+    darkMode = dark;
+    lineNumberArea->update();
+}
+
+bool CodeEditor::isDarkMode() const
+{
+    return darkMode;
 }

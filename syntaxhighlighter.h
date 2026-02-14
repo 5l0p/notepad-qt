@@ -14,6 +14,8 @@ public:
     bool isEnabled() const;
     void setRainbowBracketsEnabled(bool enabled);
     bool rainbowBracketsEnabled() const;
+    void setDarkMode(bool dark);
+    bool isDarkMode() const;
 
 protected:
     void highlightBlock(const QString &text) override;
@@ -38,8 +40,11 @@ private:
     QTextCharFormat preprocessorFormat;
     QVector<QTextCharFormat> bracketFormats;
 
+    void updateFormats();
+
     bool enabled;
     bool rainbowBrackets;
+    bool darkMode;
 };
 
 #endif // SYNTAXHIGHLIGHTER_H

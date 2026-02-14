@@ -24,3 +24,5 @@ HEADERS += \
     codeeditor.h \
     syntaxhighlighter.h \
     finddialog.h
+
+RESOURCES += resources.qrc

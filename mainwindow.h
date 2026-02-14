@@ -50,7 +50,10 @@ private:
     QString currentFile;
     QLabel *lineColLabel;
 
+    void applyTheme(bool dark);
+
     // View menu actions (for settings persistence)
+    QAction *darkModeAct;
     QAction *lineNumAct;
     QAction *wordWrapAct;
     QAction *syntaxAct;
